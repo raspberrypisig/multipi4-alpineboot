@@ -4,22 +4,12 @@
 
 set -x
 
-TEMP_DIR=$(grep /dev/sda2 /etc/mtab|cut -f2 -d' ')
+#TEMP_DIR=$(grep /dev/sda2 /etc/mtab|cut -f2 -d' ')
 #TEMP_DIR=/media/usb
 #TEMP_DIR=/media/sda2
+TEMP_DIR=/tmp/sda2
 USB_DISK=/dev/sda
 BTRFS_DIR=/tmp/usb3
-
-if [ -z $TEMP_DIR ];
-then
-  TEMP_DIR=/media/sda2
-  mkdir -p $TEMP_DIR
-  mount /dev/sda2 $TEMP_DIR
-fi
-
-#ls /media
-#sleep 60
-
 
 createsubvolumename() {
   name="$1"
@@ -29,8 +19,8 @@ createsubvolumename() {
   echo $newvolname  
 }
 
-#mkdir -p $TEMP_DIR
-#mount ${USB_DISK}2 $TEMP_DIR
+mkdir -p $TEMP_DIR
+mount ${USB_DISK}2 $TEMP_DIR
 options=()
 
 if [ -f $TEMP_DIR/oslist.txt ];
@@ -48,46 +38,31 @@ CHOICE=$(whiptail --title "Choose OS" --menu " "  --nocancel --noitem   20 70 5 
 volname=$(createsubvolumename "$CHOICE")
 echo $volname
 
-umount /dev/sda2
-mount /dev/sda2 /media/sda2
+#umount /dev/sda2
+#mount /dev/sda2 /media/sda2
+find $TEMP_DIR ! -name "oslist.txt" -type f -exec rm -rf {} \;
+find $TEMP_DIR -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} \;
+#ls -l $TEMP_DIR
+#sleep 30
 
-find $TEMP_DIR -mindepth 1 -type d -exec rm -rf '{}' \;
-
-mkdir $TEMP_DIR/$volname
 mkdir -p $BTRFS_DIR
 modprobe btrfs
 mount -r ${USB_DISK}3 $BTRFS_DIR
 
 if [ -d $BTRFS_DIR/@${volname}/boot/firmware ];
 then
-cp "$BTRFS_DIR/@${volname}/boot/firmware/config.txt" $TEMP_DIR 
+cp -r $BTRFS_DIR/@${volname}/boot/firmware/* $TEMP_DIR
 else
-cp "$BTRFS_DIR/@${volname}/boot/config.txt" $TEMP_DIR 
+cp -r $BTRFS_DIR/@${volname}/boot/* $TEMP_DIR
 fi
 
-echo -e "\nos_prefix=${volname}/" >> $TEMP_DIR/config.txt
 echo -e "\ndtparam=sd_poll_once=on\n" >> $TEMP_DIR/config.txt
-
-if [ -d $TEMP_DIR/$volname ];
-then
-  rm -rf $TEMP_DIR/$volname
-fi
-
-mkdir -p $TEMP_DIR/$volname
-
-if [ -d $BTRFS_DIR/@${volname}/boot/firmware ];
-then
-cp -r $BTRFS_DIR/@${volname}/boot/firmware/* $TEMP_DIR/$volname
-else
-cp -r $BTRFS_DIR/@${volname}/boot/* $TEMP_DIR/$volname
-fi
-
 
 umount $BTRFS_DIR
 umount $TEMP_DIR
 sync
 rm -rf $BTRFS_DIR
 #rm -rf $TEMP_DIR
-sleep 60
+#sleep 60
 /etc/local.d/rebootp.bin 2
 
