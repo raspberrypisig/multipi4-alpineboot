@@ -22,11 +22,13 @@ createsubvolumename() {
 mkdir -p $TEMP_DIR
 mount ${USB_DISK}2 $TEMP_DIR
 options=()
+options_array=()
 
 if [ -f $TEMP_DIR/oslist.txt ];
 then
   while read line
   do
+    options_array+=("$line")
     options+=("$line" "$line")
   done < $TEMP_DIR/oslist.txt
 else
@@ -34,7 +36,34 @@ else
   exit 1
 fi
 
-CHOICE=$(whiptail --title "Choose OS" --menu " "  --nocancel --noitem   20 70 5 "${options[@]}" 3>&1 1>&2 2>&3)
+# if [ -f $TEMP_DIR/oslist.txt ];
+# then
+#   while read line
+#   do
+#     options+=("$line" "$line")
+#   done < $TEMP_DIR/oslist.txt
+# else
+#   echo "No OSes installed."
+#   exit 1
+# fi
+
+#CHOICE=$(whiptail --title "Choose OS" --menu " "  --nocancel --noitem   20 70 5 "${options[@]}" 3>&1 1>&2 2>&3)
+sw=`DIALOG_ERROR=5 DIALOG_ESC=1 DIALOG_TIMEOUT=5 dialog --nocancel --timeout 10 \
+           --menu "OS Selection" 20 73 8 \
+           "${options[@]}" \
+    3>&1 1>&2 2>&3`
+rc=$?
+if [ $rc -eq 0 ]; then
+  echo success
+  CHOICE="$sw"
+  echo $sw
+else
+  echo fail
+  CHOICE="${options_array[0]}"
+  echo $CHOICE
+fi
+echo "Choice: $CHOICE"
+
 volname=$(createsubvolumename "$CHOICE")
 echo $volname
 
