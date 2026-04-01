@@ -80,9 +80,9 @@ mount -r ${USB_DISK}3 $BTRFS_DIR
 
 if [ -d $BTRFS_DIR/@${volname}/boot/firmware ];
 then
-cp -r $BTRFS_DIR/@${volname}/boot/firmware/* $TEMP_DIR
+cp -rL $BTRFS_DIR/@${volname}/boot/firmware/* $TEMP_DIR
 else
-cp -r $BTRFS_DIR/@${volname}/boot/* $TEMP_DIR
+cp -rL $BTRFS_DIR/@${volname}/boot/* $TEMP_DIR
 fi
 
 echo -e "\ndtparam=sd_poll_once=on\n" >> $TEMP_DIR/config.txt
